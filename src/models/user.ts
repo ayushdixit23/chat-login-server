@@ -8,8 +8,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String },
   isGoogleUser: { type: Boolean, default: false },
   googleId: { type: String, unique: true, sparse: true },
+  bio: { type: String, default: "Hey there, i am using Lets chat!" },
 });
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model("User", userSchema);
 
-export default User 
+export default User;

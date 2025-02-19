@@ -13,13 +13,14 @@ const checkUserExists = async (email: string, userName: string) => {
   const user = await User.findOne({ $or: [{ email }, { userName }] });
 
   if (user) {
-    // Check specifically which one is causing the conflict
-    if (user.email === email) {
-      throw new CustomError("Email already exists", 409);
-    }
     if (user.userName === userName) {
       throw new CustomError("Username already exists", 409);
     }
+
+    if (user.email === email) {
+      throw new CustomError("Email already exists", 409);
+    }
+   
   }
 };
 
