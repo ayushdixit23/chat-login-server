@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { NODE_ENV, PORT, MONGO_URI } from "./utils/envConfig.js";
 import morgan from "morgan";
 import cors from "cors";
