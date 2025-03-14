@@ -20,7 +20,6 @@ const checkUserExists = async (email: string, userName: string) => {
     if (user.email === email) {
       throw new CustomError("Email already exists", 409);
     }
-   
   }
 };
 
@@ -62,15 +61,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       email: user.email,
       profilePic: user.profilePic,
       userName: user.userName,
+      about: user.bio,
     };
 
     const token = generateToken(data);
 
     return res
       .status(200)
-      .json({ message: "Login successful", token, user:data, success: true });
+      .json({ message: "Login successful", token, user: data, success: true });
   } else {
-    throw new CustomError("This account is linked with Google, please log in using Google.", 401);
+    throw new CustomError(
+      "This account is linked with Google, please log in using Google.",
+      401
+    );
   }
 });
 
@@ -136,15 +139,14 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
       fullName: user.fullName,
       profilePic: user.profilePic,
       email: user.email,
+      about: user.bio,
     };
 
     const token = generateToken(data);
     return res
       .status(200)
-      .json({ succcess: true, user: data, message: "Login successful",token });
-
+      .json({ succcess: true, user: data, message: "Login successful", token });
   } else {
-
     const userName = generateUsername(fullName);
 
     const newUser = new User({
@@ -164,17 +166,82 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
       fullName: newUser.fullName,
       profilePic: image,
       email: newUser.email,
+      about: newUser.bio,
     };
 
     const token = generateToken(data);
 
-    return res
-      .status(200)
-      .json({
-        token,
-        user: data,
-        success: true,
-        message: "Account Created && Login successful",
-      });
+    return res.status(200).json({
+      token,
+      user: data,
+      success: true,
+      message: "Account Created && Login successful",
+    });
   }
 });
+
+export const changeSetting = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const {
+      name: fullName,
+      username: userName,
+      about: bio,
+      email,
+    } = req.body;
+
+    if (!fullName || !userName || !bio || !email) {
+      res.status(400).json({ message: "All fields are required!" });
+      return;
+    }
+
+    const existingUser = await User.findOne({
+      $or: [{ email }, { userName }],
+      _id: { $ne: userId }, // Exclude the current user
+    });
+
+    if (existingUser) {
+      // If found, send an error message
+      if (existingUser.email === email) {
+       
+        throw new CustomError("Email is already in use!", 400);
+      }
+      if (existingUser.userName === userName) {
+        throw new CustomError("Username is already taken!", 400);
+      }
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Update the user's settings
+    user.fullName = fullName;
+    user.userName = userName;
+    user.bio = bio;
+    user.email = email;
+
+    let profilePic = null
+
+    if (req.file) {
+      const image = getUniqueMediaName(req.file.originalname);
+      const fullPath = `profilePics/${image}`;
+      uploadToS3(BUCKET_NAME, fullPath, req.file.buffer, req.file.mimetype),
+        profilePic = `${CLOUDFRONT_URL}${fullPath}`
+      user.profilePic = profilePic;
+    }
+
+    // Save the updated user to the database
+    const updatedUser = await user.save();
+
+    // Return the updated user data
+    res.status(200).json({
+      message: "Settings updated successfully!",
+      user: updatedUser,
+      success: true,
+      profilePic: profilePic ? profilePic : null
+    });
+  }
+);
