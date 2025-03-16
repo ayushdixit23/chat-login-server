@@ -8,6 +8,7 @@ import compression from "compression";
 import { errorMiddleware } from "./middlewares/errors/errorMiddleware.js";
 import { CustomError } from "./middlewares/errors/CustomError.js";
 import authRouter from "./routes/auth.js"
+import client from "prom-client";
 
 // Allowed origins for CORS
 const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
@@ -24,6 +25,26 @@ app.use(helmet()); // Security headers
 // Logging based on environment (development/production)
 const logFormat = NODE_ENV === "development" ? "dev" : "combined";
 app.use(morgan(logFormat));
+
+// Create a Registry which registers the metrics
+const register = new client.Registry();
+
+// Add default metrics to the registry
+client.collectDefaultMetrics({ register });
+
+// Custom metric - Counter
+const requestCounter = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'endpoint']
+});
+
+// Increment the counter on each request
+app.use((req, res, next) => {
+  requestCounter.inc({ method: req.method, endpoint: req.url });
+  next();
+});
+
 
 // Compression middleware
 app.use(compression());
@@ -51,6 +72,13 @@ app.use(
 app.get("/", (_, res) => {
   res.send("Server is running!");
 });
+
+// Expose /metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
 
 app.get("/api/data", (_, res) => {
   // Send data from the server
