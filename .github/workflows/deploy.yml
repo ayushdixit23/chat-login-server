@@ -81,8 +81,9 @@ jobs:
             -e AWS_SECRET_KEY=${AWS_SECRET_KEY} \
             -e AWS_REGION=${AWS_REGION} \
             -e BUCKET_NAME=${BUCKET_NAME} \
-            -e CLOUDFRONT_URL=${CLOUDFRONT_URL} \
+            -e CLOUDFRONT_URL=${CLOUDFRONT_URL}
             ${{ secrets.DOCKERHUB_USERNAME }}/login-chat:latest
+            
           echo "New login-chat container started successfully!"
         EOF
         echo "Deployment to GCP VM completed!"
