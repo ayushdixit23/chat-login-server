@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { NODE_ENV, PORT, MONGO_URI } from "./utils/envConfig.js";
 import morgan from "morgan";
 import cors from "cors";
@@ -9,9 +9,10 @@ import { errorMiddleware } from "./middlewares/errors/errorMiddleware.js";
 import { CustomError } from "./middlewares/errors/CustomError.js";
 import authRouter from "./routes/auth.js"
 import client from "prom-client";
+import responseTime from "response-time";
 
 // Allowed origins for CORS
-const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001","https://chatapp.ayushdixit.site", "https://chat-app-seven-rho-22.vercel.app"];
 
 // Initialize Express app
 const app = express();
@@ -26,25 +27,66 @@ app.use(helmet()); // Security headers
 const logFormat = NODE_ENV === "development" ? "dev" : "combined";
 app.use(morgan(logFormat));
 
-// Create a Registry which registers the metrics
 const register = new client.Registry();
 
 // Add default metrics to the registry
 client.collectDefaultMetrics({ register });
 
-// Custom metric - Counter
+// Custom metric - Counter (Total Requests)
 const requestCounter = new client.Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
-  labelNames: ['method', 'endpoint']
+  labelNames: ['method', 'endpoint'],
+});
+register.registerMetric(requestCounter);
+
+// Custom metric - Histogram (Request Duration)
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'endpoint'],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.3, 0.5, 1, 2, 5], // Fine-tuned buckets
 });
 
-// Increment the counter on each request
+register.registerMetric(httpRequestDurationMicroseconds);
+
+const responseStatusCounter = new client.Counter({
+  name: 'http_response_status_total',
+  help: 'Count of HTTP responses by status code',
+  labelNames: ['status'],
+});
+register.registerMetric(responseStatusCounter);
+
+// Register Metrics Middleware First
 app.use((req, res, next) => {
-  requestCounter.inc({ method: req.method, endpoint: req.url });
+  if (req.path !== '/metrics') {
+    requestCounter.inc({ method: req.method, endpoint: req.url });
+  }
   next();
 });
 
+app.use(responseTime((req: Request, res, time) => {
+  if (req.path !== '/metrics') {
+    httpRequestDurationMicroseconds.observe(
+      { method: req.method, endpoint: req.url },
+      time / 1000
+    );
+  }
+}));
+
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const updateResponseMetric = () => {
+    if (req.path !== '/metrics') {
+      const statusCode = Math.floor(res.statusCode / 100) * 100;
+      responseStatusCounter.inc({ status: statusCode.toString() });
+    }
+    res.removeListener('finish', updateResponseMetric);
+  };
+
+  res.on('finish', updateResponseMetric);
+  next();
+});
 
 // Compression middleware
 app.use(compression());
