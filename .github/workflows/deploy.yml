@@ -27,6 +27,7 @@ jobs:
     # ✅ Set up SSH key
     - name: Setup SSH key
       run: |
+        mkdir -p ~/.ssh  # Ensure the .ssh directory exists
         echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp_ecdsa_key
         chmod 600 ~/.ssh/gcp_ecdsa_key
         ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
