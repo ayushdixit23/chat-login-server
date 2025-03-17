@@ -50,7 +50,7 @@ jobs:
 
         # Navigate to the chat-deploy folder and load the .env file
         echo "Navigating to chat-deploy directory..."
-        cd /chat-deploy
+        cd chat-deploy/
 
         # Load environment variables from the .env file
         echo "Loading environment variables from .env file..."
