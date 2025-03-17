@@ -49,22 +49,22 @@ jobs:
         ssh -i ~/.ssh/gcp_ecdsa_key ${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }} << 'EOF'
           set -e  # Exit on error
           echo "Pulling latest Docker image..."
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/login-chat:latest
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/login-chat:latest
           echo "Docker image pulled successfully!"
 
           # Ensure MongoDB container is running
           echo "Ensuring MongoDB container is running..."
-          docker ps -q --filter "name=mongo" | grep -q . || docker run -d --name mongo --network backend mongo
+          sudo docker ps -q --filter "name=mongo" | grep -q . || sudo docker run -d --name mongo --network backend mongo
           echo "MongoDB container is running or started!"
 
           # Stop and remove old login-chat container
           echo "Stopping and removing old login-chat container if exists..."
-          docker ps -q --filter "name=login-chat-server" | grep -q . && docker stop login-chat-server && docker rm login-chat-server
+          sudo docker ps -q --filter "name=login-chat-server" | grep -q . && sudo docker stop login-chat-server && sudo docker rm login-chat-server
           echo "Old login-chat container stopped and removed if it existed."
 
           # Run new login-chat container with env variables
           echo "Starting new login-chat container..."
-          docker run -d \
+          sudo docker run -d \
             --name login-chat-server \
             --restart always \
             --network backend \
