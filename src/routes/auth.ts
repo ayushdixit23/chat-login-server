@@ -10,7 +10,7 @@ router.post(`/register`, upload.single("profilePic"), registerUser)
 router.post(`/google`, googleLogin)
 router.post(`/settings`, verifyUserToken, upload.single("profilePic"), changeSetting)
 router.get(`/check`, (req, res) => {
-    res.status(200).json({ success: true, message: "All good", req: req.path })
+    res.status(200).json({ success: true, message: "All good here!", req: req.path })
 })
 
 
