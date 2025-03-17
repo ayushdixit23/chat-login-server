@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ✅ Checkout the code
+    # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # ✅ Log in to Docker Hub
+    # Log in to Docker Hub
     - name: Log in to Docker Hub
       run: |
         echo "Logging into Docker Hub..."
         echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
         echo "Docker login successful!"
 
-    # ✅ Build and push Docker image
+    # Build and push Docker image
     - name: Build and push Docker image
       run: |
         echo "Building Docker image..."
@@ -30,7 +30,7 @@ jobs:
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/login-chat:latest
         echo "Docker image pushed successfully!"
 
-    # ✅ Set up SSH key
+    # Set up SSH key
     - name: Setup SSH key
       run: |
         echo "Setting up SSH key..."
@@ -40,7 +40,7 @@ jobs:
         ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
         echo "SSH key setup complete!"
 
-    # ✅ Deploy on GCP VM
+    # Deploy on GCP VM
     - name: Deploy on GCP VM
       run: |
         echo "Deploying to GCP VM..."
