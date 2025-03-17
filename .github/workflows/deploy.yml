@@ -34,17 +34,19 @@ jobs:
     - name: Setup SSH key
       run: |
         echo "Setting up SSH key..."
-        mkdir -p ~/.ssh  # Ensure the .ssh directory exists
-        echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/gcp_ecdsa_key
+        mkdir -p ~/.ssh
+        echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp_ecdsa_key
         chmod 600 ~/.ssh/gcp_ecdsa_key
-        ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
+        ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
         echo "SSH key setup complete!"
+
 
     # Deploy on GCP VM
     - name: Deploy on GCP VM
       run: |
         echo "Deploying to GCP VM..."
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcp_ecdsa_key ${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }} << 'EOF'
+        echo "${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }}"
+        ssh -i ~/.ssh/gcp_ecdsa_key ${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }} << 'EOF'
           set -e  # Exit on error
           echo "Pulling latest Docker image..."
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/login-chat:latest
