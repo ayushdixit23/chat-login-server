@@ -62,6 +62,10 @@ jobs:
           sudo docker ps -q --filter "name=login-chat-server" | grep -q . && sudo docker stop login-chat-server && sudo docker rm login-chat-server
           echo "Old login-chat container stopped and removed if it existed."
 
+          echo "PORT_LOGIN_CHAT=${PORT_LOGIN_CHAT}"
+
+          echo "MONGO_URI=${MONGO_URI}"
+
           # Run new login-chat container with env variables
           echo "Starting new login-chat container..."
           sudo docker run -d \
