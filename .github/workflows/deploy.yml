@@ -56,18 +56,6 @@ jobs:
         echo "Loading environment variables from .env file..."
         export $(cat .env | grep -v ^# | xargs)
 
-        # Print the environment variables to verify they are loaded correctly
-        echo "Loaded environment variables:"
-        echo "PORT_LOGIN_CHAT: $PORT_LOGIN_CHAT"
-        echo "MONGO_URI: $MONGO_URI"
-        echo "AWS_ACCESS_KEY: $AWS_ACCESS_KEY"
-        echo "AWS_SECRET_KEY: $AWS_SECRET_KEY"
-        echo "AWS_REGION: $AWS_REGION"
-        echo "BUCKET_NAME: $BUCKET_NAME"
-        echo "CLOUDFRONT_URL: $CLOUDFRONT_URL"
-        echo "AMPQ_URL: $AMPQ_URL"
-        echo "REDIS_URL: $REDIS_URL"
-
         # Ensure MongoDB container is running
         echo "Ensuring MongoDB container is running..."
         sudo docker ps -q --filter "name=mongo" | grep -q . || sudo docker run -d --name mongo --network backend mongo
@@ -83,7 +71,7 @@ jobs:
         sudo docker run -d \
           --name login-chat-server \
           --restart always \
-          --network backend \
+          --network chat-deploy_backend \
           -p $PORT_LOGIN_CHAT:$PORT_LOGIN_CHAT \
           -e PORT=$PORT_LOGIN_CHAT \
           -e MONGO_URI=$MONGO_URI \
