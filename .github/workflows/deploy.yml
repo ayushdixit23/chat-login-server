@@ -63,7 +63,9 @@ jobs:
 
         # Stop and remove old login-chat container
         echo "Stopping and removing old login-chat container if exists..."
-        sudo docker ps -q --filter "name=login-chat-server" | grep -q . && sudo docker stop login-chat-server && sudo docker rm login-chat-server
+        sudo docker ps -q --filter "name=login-chat-server" | grep -q . && \
+          sudo docker stop login-chat-server && \
+          sudo docker rm -f login-chat-server
         echo "Old login-chat container stopped and removed if it existed."
 
         # Run new login-chat container with env variables loaded from .env
